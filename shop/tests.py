@@ -1,7 +1,7 @@
 from django.urls import reverse_lazy, reverse
 from rest_framework.test import APITestCase
 
-from shop.models import Category, Product
+from .models import Category, Product
 
 
 class ShopAPITestCase(APITestCase):

@@ -1,7 +1,7 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from shop.models import Category, Product, Article
-from shop.serializers import CategorySerializer, ProductSerializer, ArticleSerializer
+from .models import Category, Product, Article
+from .serializers import CategorySerializer, ProductSerializer, ArticleSerializer
 
 
 class CategoryViewset(ReadOnlyModelViewSet):
