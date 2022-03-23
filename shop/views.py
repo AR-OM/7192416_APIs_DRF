@@ -1,4 +1,6 @@
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.response import Response
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_framework.decorators import action
 
 from .models import Category, Product, Article
 from .serializers import CategoryDetailSerializer, CategoryListSerializer, \
@@ -15,10 +17,25 @@ class MultipleSerializerMixin:
         return super().get_serializer_class()
 
 
+class AdminCategoryViewset(MultipleSerializerMixin, ModelViewSet):
+
+    serializer_class = CategoryListSerializer
+    detail_serializer_class = CategoryDetailSerializer
+
+    def get_queryset(self):
+        return Category.objects.all()
+
+
 class CategoryViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
 
     serializer_class = CategoryListSerializer
     detail_serializer_class = CategoryDetailSerializer
+
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk):
+        self.get_object().disable()
+
+        return Response()
 
     def get_queryset(self):
         return Category.objects.filter(active=True)
@@ -28,6 +45,11 @@ class ProductViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
 
     serializer_class = ProductListSerializer
     detail_serializer_class = ProductDetailSerializer
+
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk):
+        self.get_object().disable()
+        return Response()
 
     def get_queryset(self):
         queryset = Product.objects.filter(active=True)

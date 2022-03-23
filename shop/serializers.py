@@ -7,14 +7,14 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Article
-        fields = ['id', 'name', 'date_created', 'date_updated', 'price', 'product']
+        fields = ['id', 'date_created', 'date_updated', 'name', 'price', 'product']
 
 
 class ProductListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'date_created', 'date_updated', 'category']
+        fields = ['id', 'date_created', 'date_updated', 'name', 'category']
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -23,7 +23,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'date_created', 'date_updated', 'category', 'articles']
+        fields = ['id', 'date_created', 'date_updated', 'name', 'category', 'articles']
 
     def get_articles(self, instance):
         queryset = instance.articles.filter(active=True)
@@ -35,7 +35,18 @@ class CategoryListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'date_created', 'date_updated']
+        fields = ['id', 'date_created', 'date_updated', 'name', 'description']
+
+    def validate_name(self, value):
+        if Category.objects.filter(name=value).exists():
+            raise serializers.ValidationError('Category already exists!')
+
+        return value
+
+    def validate(self, data):
+        if data['name'] not in data['description']:
+            raise serializers.ValidationError('Name must be in description')
+        return data
 
 
 class CategoryDetailSerializer(serializers.ModelSerializer):
