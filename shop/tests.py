@@ -1,7 +1,9 @@
+from unittest import mock
 from django.urls import reverse_lazy, reverse
 from rest_framework.test import APITestCase
 
 from .models import Category, Product
+from .mock import mock_openfoodfact_success, ECOSCORE_GRADE
 
 
 class ShopAPITestCase(APITestCase):
@@ -39,7 +41,7 @@ class ShopAPITestCase(APITestCase):
                 'date_created': self.format_datetime(product.date_created),
                 'date_updated': self.format_datetime(product.date_updated),
                 'category': product.category_id,
-                'articles': self.get_article_list_data(product.articles.filter(active=True))
+                'ecoscore': ECOSCORE_GRADE
             } for product in products
         ]
 
@@ -47,10 +49,11 @@ class ShopAPITestCase(APITestCase):
         return [
             {
                 'id': category.id,
+                'name': category.name,
+                'description': category.description,
                 'date_created': self.format_datetime(category.date_created),
                 'date_updated': self.format_datetime(category.date_updated),
-                'name': category.name,
-                'products': self.get_product_list_data(category.products.filter(active=True))
+
             } for category in categories
         ]
 
@@ -62,12 +65,11 @@ class TestCategory(ShopAPITestCase):
     def test_list(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-
         self.assertEqual(response.json()['results'], self.get_category_list_data([self.category, self.category_2]))
 
     def test_create(self):
         category_count = Category.objects.count()
-        response = self.client.post(self.url, data={'name': 'Nouvelle catégorie'})
+        response = self.client.post(self.url, data={'name': 'New category'})
         self.assertEqual(response.status_code, 405)
         self.assertEqual(Category.objects.count(), category_count)
 
@@ -76,11 +78,15 @@ class TestProduct(ShopAPITestCase):
 
     url = reverse_lazy('product-list')
 
+
+    @mock.patch('shop.models.Product.call_external_api', mock_openfoodfact_success)
     def test_list(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.get_product_list_data([self.product, self.product_2]), response.json()['results'])
 
+
+    @mock.patch('shop.models.Product.call_external_api', mock_openfoodfact_success)
     def test_list_filter(self):
         response = self.client.get(f'{self.url}?category_id= {self.category.pk}')
         self.assertEqual(response.status_code, 200)
@@ -88,7 +94,7 @@ class TestProduct(ShopAPITestCase):
 
     def test_create(self):
         product_count = Product.objects.count()
-        response = self.client.post(self.url, data={'name': 'Nouvelle catégorie'})
+        response = self.client.post(self.url, data={'name': 'New category'})
         self.assertEqual(response.status_code, 405)
         self.assertEqual(Product.objects.count(), product_count)
 
